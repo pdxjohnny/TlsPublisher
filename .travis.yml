@@ -8,7 +8,7 @@ before_install:
   - unzip peach.zip
   - cd $TRAVIS_BUILD_DIR
 script:
-  - dmcs TlsPublisher.cs -out:TlsPublisher.dll -target:library -r:${PEACH}/Peach.Core.dll,${PEACH}/NLog.dll
+  - mcs TlsPublisher.cs -out:TlsPublisher.dll -target:library -r:${PEACH}/Peach.Core.dll,${PEACH}/NLog.dll
 deploy:
   provider: releases
   api_key:

@@ -5,7 +5,6 @@
     </DataModel>
     <StateModel name="TheState" initialState="Initial">
         <State name="Initial">
-            <!-- send bytes -->
             <Action type="output">
                 <DataModel ref="TheDataModel"/>
             </Action>

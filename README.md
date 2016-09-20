@@ -20,7 +20,7 @@ git clone https://github.com/pdxjohnny/TlsPublisher
 cd TlsPublisher
 # Or whereever you installed peach
 export PEACH=/usr/share/peach
-dmcs TlsPublisher.cs -out:TlsPublisher.dll -target:library -r:${PEACH}/Peach.Core.dll,${PEACH}/NLog.dll
+mcs TlsPublisher.cs -out:TlsPublisher.dll -target:library -r:${PEACH}/Peach.Core.dll,${PEACH}/NLog.dll
 ln -s $PWD/TlsPublisher.dll $PEACH/
 ```
 

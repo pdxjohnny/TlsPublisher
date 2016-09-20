@@ -227,4 +227,94 @@ namespace Peach.Core.Publishers
 			StartClient();
 		}
 	}
+
+	[Publisher("TlsListener", true)]
+	[Publisher("tcp.TlsListener")]
+	[Parameter("Interface", typeof(IPAddress), "IP of interface to bind to")]
+	[Parameter("Port", typeof(ushort), "Local port to listen on")]
+	[Parameter("Timeout", typeof(int), "How many milliseconds to wait when receiving data (default 3000)", "3000")]
+	[Parameter("SendTimeout", typeof(int), "How many milliseconds to wait when sending data (default infinite)", "0")]
+	[Parameter("AcceptTimeout", typeof(int), "How many milliseconds to wait for a connection (default 3000)", "3000")]
+	[Parameter("CertificateFile", typeof(string), "PEM certificate to use")]
+	public class TlsListenerPublisher : TlsPublisher
+	{
+		private static NLog.Logger logger = LogManager.GetCurrentClassLogger();
+		protected override NLog.Logger Logger { get { return logger; } }
+
+		public IPAddress Interface { get; set; }
+		public int AcceptTimeout { get; set; }
+
+		protected string CertificateFile { get; set; }
+        protected X509Certificate _certificate = null;
+
+		protected TcpListener _listener = null;
+
+		public TlsListenerPublisher(Dictionary<string, Variant> args)
+			: base(args)
+		{
+		}
+
+		protected override void OnOpen()
+		{
+			System.Diagnostics.Debug.Assert(_listener == null);
+			System.Diagnostics.Debug.Assert(_certificate == null);
+
+            try
+            {
+                _certificate = new X509Certificate2(CertificateFile);
+			}
+			catch (Exception ex)
+			{
+				throw new PeachException("Error, unable to read server PEM " +
+					CertificateFile + ": " + ex.Message, ex);
+			}
+
+			try
+			{
+				_listener = new TcpListener(Interface, Port);
+				_listener.Start();
+			}
+			catch (Exception ex)
+			{
+				throw new PeachException("Error, unable to bind to interface " +
+					Interface + " on port " + Port + ": " + ex.Message, ex);
+			}
+
+			base.OnOpen();
+		}
+
+		protected override void OnClose()
+		{
+			if (_listener != null)
+			{
+				_listener.Stop();
+				_listener = null;
+			}
+
+			base.OnClose();
+		}
+
+		protected override void OnAccept()
+		{
+			// Ensure any open stream is closed...
+			base.OnClose();
+
+			try
+			{
+				var ar = _listener.BeginAcceptTcpClient(null, null);
+				if (!ar.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(AcceptTimeout)))
+					throw new TimeoutException();
+				_tcp = _listener.EndAcceptTcpClient(ar);
+                _tls = new SslStream(_tcp.GetStream(), false);
+                _tls.AuthenticateAsServer(_certificate, false, SslProtocols.Tls, true);
+			}
+			catch (Exception ex)
+			{
+				throw new SoftException(ex);
+			}
+
+			// Start receiving on the client
+			StartClient();
+		}
+	}
 }

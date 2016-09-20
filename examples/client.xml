@@ -6,7 +6,6 @@
     <StateModel name="TheState" initialState="Initial">
         <State name="Initial">
             <Action type="accept"/>
-
             <Action type="output">
                 <DataModel ref="TheDataModel"/>
             </Action>
@@ -29,6 +28,7 @@
         <Agent ref="LinAgent" platform="linux"/>
         <StateModel ref="TheState"/>
         <Publisher class="TlsListener">
+            <Param name="CertificateFile" value="server.pem"/>
             <Param name="Interface" value="127.0.0.1"/>
             <Param name="Port" value="4433"/>
         </Publisher>
