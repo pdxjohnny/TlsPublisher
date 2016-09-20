@@ -60,6 +60,7 @@ namespace Peach.Core.Publishers
 
 		protected override void StartClient()
 		{
+			System.Diagnostics.Debug.Assert(_tls != null);
 			System.Diagnostics.Debug.Assert(_tcp != null);
 			System.Diagnostics.Debug.Assert(_client == null);
 			System.Diagnostics.Debug.Assert(_localEp == null);
@@ -83,7 +84,9 @@ namespace Peach.Core.Publishers
 
 		protected override void ClientClose()
 		{
+			_tls.Close();
 			_tcp.Close();
+			_tls = null;
 			_tcp = null;
 			_remoteEp = null;
 			_localEp = null;
