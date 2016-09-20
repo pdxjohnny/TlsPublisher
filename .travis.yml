@@ -1,0 +1,19 @@
+language: csharp
+env:
+  - PEACH="/tmp/peach" PEACH_DL="http://heanet.dl.sourceforge.net/project/peachfuzz/Peach/3.1/peach-3.1.124-linux-x86_64-release.zip"
+before_install:
+  - mkdir -pv $PEACH
+  - cd $PEACH
+  - wget -O $PEACH/peach.zip $PEACH_DL
+  - unzip peach.zip
+  - cd $TRAVIS_BUILD_DIR
+script:
+  - dmcs TlsPublisher.cs -out:TlsPublisher.dll -target:library -r:${PEACH}/Peach.Core.dll,${PEACH}/NLog.dll
+deploy:
+  provider: releases
+  api_key:
+    secure: qkYCfdjrMKSN5wgAmBJy6bNfhBwN1foTdy6ILJN5QNsChFtN2rYVvWsC8UBDqVdg7vJioyc1cP/NPbM+F6ERITri1fyv6Ezg769s3slgeqDQPEpITFXMAb63PDed6f0IhMqI/sU/lPzVxAx78StiE44TTqDe7AvVX/OWeqQGnRWvGdCPrriuy5Sht2TKzKnYtRyuPnQc5a6PzBPwrUnk8JkNnTQt2Mh0YD7jn5CFdAhbnQd1HyN5BhojV0suWGrcsATkmBFMvFEaBQx0hv1RIDkxnBppDwK7U6XWtAMi5IQzAiGPyvl7pXypIb8G9oU3Q98Niyq6zAhqXZZf8saA91KJN7Wj6CPN5pf93zaZTqImKYH2GxXQETyyCmbhoYPOgJcp+QPXU93TnkdesbrcGfIUy4VIMzem4+ycd/6O+VM6xBg8/51D6cPC6E/orPW2J6OOAjVWh/64GoBtho9YVDPq53iyHKIAHS1htZPbdVbib98n3Z0Mk1t6l0hzUyHiz+Zbbm7FMP6073VQKaRUGZj4z/iO2TBchOM5pe0EitCzk0pmdn64Y/ykU9yjRcL35hcNfflaGTEpcwcbcjxcX1Ld2gIwPHag5SQlN/wsphP+purga4l88Rx00eiy+3LX04sqeBi3GNY+R/B9evdk+s7yW4tL/2y0ou1oAIaf7nk=
+  file: TlsPublisher.dll
+  overwrite: true
+  on:
+    repo: pdxjohnny/TlsPublisher
