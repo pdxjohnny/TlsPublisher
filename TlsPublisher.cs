@@ -94,27 +94,28 @@ namespace Peach.Core.Publishers
 
 		protected override IAsyncResult ClientBeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
 		{
-			return _tcp.Client.BeginReceive(buffer, offset, count, SocketFlags.None, callback, state);
+			return _tls.BeginRead(buffer, offset, count, callback, state);
 		}
 
 		protected override int ClientEndRead(IAsyncResult asyncResult)
 		{
-			return _tcp.Client.EndReceive(asyncResult);
+			return _tls.EndRead(asyncResult);
 		}
 
 		protected override void ClientShutdown()
 		{
-			_tcp.Client.Shutdown(SocketShutdown.Send);
+			_tls.Close();
 		}
 
 		protected override IAsyncResult ClientBeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
 		{
-			return _tcp.Client.BeginSend(buffer, offset, count, SocketFlags.None, callback, state);
+			return _tls.BeginWrite(buffer, offset, count, callback, state);
 		}
 
 		protected override int ClientEndWrite(IAsyncResult asyncResult)
 		{
-			return _tcp.Client.EndSend(asyncResult);
+			_tls.EndWrite(asyncResult);
+            return 1;
 		}
 	}
 
@@ -134,9 +135,7 @@ namespace Peach.Core.Publishers
 		public string Host { get; set; }
 		public int ConnectTimeout { get; set; }
 
-		public TlsClientPublisher(Dictionary<string, Variant> args)
-			: base(args)
-		{
+		public TlsClientPublisher(Dictionary<string, Variant> args) : base(args) {
 		}
 
         // The following method is invoked by the RemoteCertificateValidationDelegate.
@@ -153,7 +152,8 @@ namespace Peach.Core.Publishers
             // There are errors with the certificate
             Logger.Error("tls: Certificate error: {0}.", sslPolicyErrors);
             // Do not allow this client to communicate with unauthenticated servers.
-            return false;
+            // return false;
+            return true;
         }
 
 		protected override void OnOpen() {
@@ -176,28 +176,24 @@ namespace Peach.Core.Publishers
                     }
 					_tcp.EndConnect(ar);
 
-					// Create an SSL stream that will close the client's stream.
-					_tls = new SslStream(
-						_tcp.GetStream(),
-						false,
-						new RemoteCertificateValidationCallback(ValidateServerCertificate),
-						null
-                    );
+                    try {
+                        // Create an SSL stream that will close the client's stream.
+                        _tls = new SslStream(
+                            _tcp.GetStream(),
+                            false,
+                            new RemoteCertificateValidationCallback(ValidateServerCertificate),
+                            null
+                        );
+					} catch (Exception ex) {
+						Logger.Error("tls: Error, On creation of SslStream {0}.", ex.ToString());
+						throw new SoftException(ex);
+					}
 
 					// The server name must match the name on the server certificate.
 					try {
 						_tls.AuthenticateAsClient(Host);
 					} catch (AuthenticationException ex) {
-                        if (_tcp != null) {
-                            _tcp.Close();
-                            _tcp = null;
-                        }
-                        if (_tls != null) {
-                            _tls.Close();
-                            _tls = null;
-                        }
-
-						Logger.Error("tls: Error, Upable to authenticate host {0}.", Host);
+						Logger.Error("tls: Error, Unable to authenticate host {0}.", Host);
 						throw new SoftException(ex);
 					}
 				}

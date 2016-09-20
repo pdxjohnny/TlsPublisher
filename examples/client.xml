@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Peach>
+    <DataModel name="TheDataModel">
+        <String value="Hello World\n" token="true" />
+    </DataModel>
+    <StateModel name="TheState" initialState="Initial">
+        <State name="Initial">
+            <Action type="accept"/>
+
+            <Action type="output">
+                <DataModel ref="TheDataModel"/>
+            </Action>
+        </State>
+    </StateModel>
+    <Agent name="LinAgent">
+        <!-- Register for core file notifications. -->
+        <Monitor class="LinuxDebugger">
+            <!-- This is the program we're going to run inside of the debugger -->
+            <Param name="Executable" value="openssl"/>
+            <!-- These are arguments to the executable we want to run -->
+            <Param name="Arguments" value="s_client -connect 127.0.0.1:4433"/>
+            <!-- This parameter will cause the monitor to terminate the process
+                             once the CPU usage reaches zero.
+                        -->
+            <Param name="CpuKill" value="true"/>
+        </Monitor>
+    </Agent>
+    <Test name="Default">
+        <Agent ref="LinAgent" platform="linux"/>
+        <StateModel ref="TheState"/>
+        <Publisher class="TlsListener">
+            <Param name="Interface" value="127.0.0.1"/>
+            <Param name="Port" value="4433"/>
+        </Publisher>
+        <Strategy class="Random"/>
+        <Logger class="Filesystem">
+            <Param name="Path" value="logs"/>
+        </Logger>
+    </Test>
+</Peach>
