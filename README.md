@@ -3,6 +3,16 @@
 This peach publisher is a drop in replacement for the Tcp Client and Server
 Publishers for fuzzing applications which communicate over TLS.
 
+## Installation
+
+Just download the latest release!
+
+```
+# The directory you installed peach to
+cd /usr/share/peach
+wget https://github.com/pdxjohnny/TlsPublisher/releases/download/latest/TlsPublisher.dll
+```
+
 ## Building
 
 ```
