@@ -1,4 +1,4 @@
-# TlsPublisher for peach
+# TlsPublisher for peach [![Build Status](https://travis-ci.org/pdxjohnny/TlsPublisher.svg?branch=master)](https://travis-ci.org/pdxjohnny/TlsPublisher)
 
 This peach publisher is a drop in replacement for the Tcp Client and Server
 Publishers for fuzzing applications which communicate over TLS.

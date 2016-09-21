@@ -127,6 +127,7 @@ namespace Peach.Core.Publishers
 	[Parameter("Timeout", typeof(int), "How many milliseconds to wait when receiving data (default 3000)", "3000")]
 	[Parameter("SendTimeout", typeof(int), "How many milliseconds to wait when sending data (default infinite)", "0")]
 	[Parameter("ConnectTimeout", typeof(int), "Max milliseconds to wait for connection (default 10000)", "10000")]
+	[Parameter("CertificateFile", typeof(string), "pks certificate to use", "0")]
 	public class TlsClientPublisher : TlsPublisher
 	{
 		private static NLog.Logger logger = LogManager.GetCurrentClassLogger();
@@ -134,6 +135,9 @@ namespace Peach.Core.Publishers
 
 		public string Host { get; set; }
 		public int ConnectTimeout { get; set; }
+
+		public string CertificateFile { get; set; }
+        protected X509Certificate2 _certificate = null;
 
 		public TlsClientPublisher(Dictionary<string, Variant> args) : base(args) {
 		}
@@ -161,6 +165,20 @@ namespace Peach.Core.Publishers
 
 			var timeout = ConnectTimeout;
 			var sw = new Stopwatch();
+
+            var certificateFile = CertificateFile;
+            if (certificateFile != "0")
+            {
+                try
+                {
+                    _certificate = new X509Certificate2(certificateFile);
+                }
+                catch (Exception ex)
+                {
+                    throw new PeachException("Error, unable to read server pks " +
+                        certificateFile + ": " + ex.Message, ex);
+                }
+			}
 
 			for (int i = 1; _tcp == null; i *= 2) {
 				try {
@@ -191,7 +209,14 @@ namespace Peach.Core.Publishers
 
 					// The server name must match the name on the server certificate.
 					try {
-						_tls.AuthenticateAsClient(Host);
+                        if (_certificate != null)
+                        {
+                            _tls.AuthenticateAsClient(Host, new X509Certificate2Collection(_certificate), System.Security.Authentication.SslProtocols.Tls, false);
+                        }
+                        else
+                        {
+                            _tls.AuthenticateAsClient(Host);
+                        }
 					} catch (AuthenticationException ex) {
 						Logger.Error("tls: Error, Unable to authenticate host {0}.", Host);
 						throw new SoftException(ex);
@@ -235,7 +260,7 @@ namespace Peach.Core.Publishers
 	[Parameter("Timeout", typeof(int), "How many milliseconds to wait when receiving data (default 3000)", "3000")]
 	[Parameter("SendTimeout", typeof(int), "How many milliseconds to wait when sending data (default infinite)", "0")]
 	[Parameter("AcceptTimeout", typeof(int), "How many milliseconds to wait for a connection (default 3000)", "3000")]
-	[Parameter("CertificateFile", typeof(string), "PEM certificate to use")]
+	[Parameter("CertificateFile", typeof(string), "pks certificate to use")]
 	public class TlsListenerPublisher : TlsPublisher
 	{
 		private static NLog.Logger logger = LogManager.GetCurrentClassLogger();
@@ -265,7 +290,7 @@ namespace Peach.Core.Publishers
 			}
 			catch (Exception ex)
 			{
-				throw new PeachException("Error, unable to read server PEM " +
+				throw new PeachException("Error, unable to read server pks " +
 					CertificateFile + ": " + ex.Message, ex);
 			}
 

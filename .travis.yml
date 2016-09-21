@@ -1,6 +1,6 @@
 language: csharp
 env:
-  - PEACH="/tmp/peach" PEACH_DL="http://heanet.dl.sourceforge.net/project/peachfuzz/Peach/3.1/peach-3.1.124-linux-x86_64-release.zip"
+  - PEACH="/tmp/peach" PEACH_DL="https://downloads.sourceforge.net/project/peachfuzz/Peach/3.1/peach-3.1.124-linux-x86_64-release.zip"
 before_install:
   - mkdir -pv $PEACH
   - cd $PEACH
