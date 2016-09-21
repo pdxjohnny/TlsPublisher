@@ -5,6 +5,8 @@
     </DataModel>
     <StateModel name="TheState" initialState="Initial">
         <State name="Initial">
+            <Action type="open" />
+            <Action type="call" method="launchProgram" publisher="Peach.Agent"/>
             <Action type="accept"/>
             <Action type="output">
                 <DataModel ref="TheDataModel"/>
@@ -22,13 +24,15 @@
                              once the CPU usage reaches zero.
                         -->
             <Param name="CpuKill" value="true"/>
+            <!-- Allows us to start the client after the server -->
+            <Param name="StartOnCall" value="launchProgram" />
         </Monitor>
     </Agent>
     <Test name="Default">
         <Agent ref="LinAgent" platform="linux"/>
         <StateModel ref="TheState"/>
         <Publisher class="TlsListener">
-            <Param name="CertificateFile" value="server.pem"/>
+            <Param name="CertificateFile" value="server.pfx"/>
             <Param name="Interface" value="127.0.0.1"/>
             <Param name="Port" value="4433"/>
         </Publisher>

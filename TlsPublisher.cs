@@ -245,7 +245,7 @@ namespace Peach.Core.Publishers
 		public int AcceptTimeout { get; set; }
 
 		protected string CertificateFile { get; set; }
-        protected X509Certificate _certificate = null;
+        protected X509Certificate2 _certificate = null;
 
 		protected TcpListener _listener = null;
 

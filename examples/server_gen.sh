@@ -16,6 +16,8 @@ Examples
 localhost
 johnandersenpdx@gmail.com
 EOF
+# SslStream for Authenticate as server needs pkcs12 format
+openssl pkcs12 -export -in server.pem -out server.pfx -passout pass:
 
 echo -e "\nDone generating server certificate"
 chmod 600 server.pem
