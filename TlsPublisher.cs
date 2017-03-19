@@ -1,4 +1,3 @@
-
 //
 // Copyright (c) Michael Eddington
 //
@@ -44,302 +43,287 @@ using Peach.Core.IO;
 
 namespace Peach.Core.Publishers
 {
-	public abstract class TlsPublisher : BufferedStreamPublisher
-	{
-		public ushort Port { get; set; }
+  public abstract class TlsPublisher : BufferedStreamPublisher
+  {
+    public ushort Port { get; set; }
 
-		protected SslStream _tls = null;
-		protected TcpClient _tcp = null;
-		protected EndPoint _localEp = null;
-		protected EndPoint _remoteEp = null;
+    protected SslStream _tls = null;
+    protected TcpClient _tcp = null;
+    protected EndPoint _localEp = null;
+    protected EndPoint _remoteEp = null;
 
-		public TlsPublisher(Dictionary<string, Variant> args)
-			: base(args)
-		{
-		}
+    public TlsPublisher(Dictionary<string, Variant> args)
+      : base(args) {}
 
-		protected override void StartClient()
-		{
-			System.Diagnostics.Debug.Assert(_tls != null);
-			System.Diagnostics.Debug.Assert(_tcp != null);
-			System.Diagnostics.Debug.Assert(_client == null);
-			System.Diagnostics.Debug.Assert(_localEp == null);
-			System.Diagnostics.Debug.Assert(_remoteEp == null);
+    protected override void StartClient() {
+      System.Diagnostics.Debug.Assert(_tls != null);
+      System.Diagnostics.Debug.Assert(_tcp != null);
+      System.Diagnostics.Debug.Assert(_client == null);
+      System.Diagnostics.Debug.Assert(_localEp == null);
+      System.Diagnostics.Debug.Assert(_remoteEp == null);
 
-			try
-			{
-				_client = new MemoryStream();
-				_localEp = _tcp.Client.LocalEndPoint;
-				_remoteEp = _tcp.Client.RemoteEndPoint;
-				_clientName = _remoteEp.ToString();
-			}
-			catch (Exception ex)
-			{
-				Logger.Error("open: Error, Unable to start tcp client reader. {0}.", ex.Message);
-				throw new SoftException(ex);
-			}
+      try {
+        _client = new MemoryStream();
+        _localEp = _tcp.Client.LocalEndPoint;
+        _remoteEp = _tcp.Client.RemoteEndPoint;
+        _clientName = _remoteEp.ToString();
+      }
+      catch (Exception ex) {
+        Logger.Error("open: Error, Unable to start tcp client reader. {0}.", ex.Message);
+        throw new SoftException(ex);
+      }
 
-			base.StartClient();
-		}
+      base.StartClient();
+    }
 
-		protected override void ClientClose()
-		{
-			_tls.Close();
-			_tcp.Close();
-			_tls = null;
-			_tcp = null;
-			_remoteEp = null;
-			_localEp = null;
-		}
+    protected override void ClientClose() {
+      _tls.Close();
+      _tcp.Close();
+      _tls = null;
+      _tcp = null;
+      _remoteEp = null;
+      _localEp = null;
+    }
 
-		protected override IAsyncResult ClientBeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-		{
-			return _tls.BeginRead(buffer, offset, count, callback, state);
-		}
+    protected override IAsyncResult ClientBeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state) {
+      return _tls.BeginRead(buffer, offset, count, callback, state);
+    }
 
-		protected override int ClientEndRead(IAsyncResult asyncResult)
-		{
-			return _tls.EndRead(asyncResult);
-		}
+    protected override int ClientEndRead(IAsyncResult asyncResult) {
+      return _tls.EndRead(asyncResult);
+    }
 
-		protected override void ClientShutdown()
-		{
-			_tls.Close();
-		}
+    protected override void ClientShutdown() {
+      _tls.Close();
+    }
 
-		protected override IAsyncResult ClientBeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-		{
-			return _tls.BeginWrite(buffer, offset, count, callback, state);
-		}
+    protected override IAsyncResult ClientBeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state) {
+      return _tls.BeginWrite(buffer, offset, count, callback, state);
+    }
 
-		protected override int ClientEndWrite(IAsyncResult asyncResult)
-		{
-			_tls.EndWrite(asyncResult);
+    protected override int ClientEndWrite(IAsyncResult asyncResult) {
+      _tls.EndWrite(asyncResult);
             return 1;
-		}
-	}
+    }
+  }
 
-	[Publisher("Tls", true)]
-	[Publisher("TlsClient")]
-	[Publisher("tcp.Tls")]
-	[Parameter("Host", typeof(string), "Hostname or IP address of remote host")]
-	[Parameter("Port", typeof(ushort), "Local port to listen on")]
-	[Parameter("Timeout", typeof(int), "How many milliseconds to wait when receiving data (default 3000)", "3000")]
-	[Parameter("SendTimeout", typeof(int), "How many milliseconds to wait when sending data (default infinite)", "0")]
-	[Parameter("ConnectTimeout", typeof(int), "Max milliseconds to wait for connection (default 10000)", "10000")]
-	[Parameter("CertificateFile", typeof(string), "pks certificate to use", "0")]
-	public class TlsClientPublisher : TlsPublisher
-	{
-		private static NLog.Logger logger = LogManager.GetCurrentClassLogger();
-		protected override NLog.Logger Logger { get { return logger; } }
+  [Publisher("Tls", true)]
+  [Publisher("TlsClient")]
+  [Publisher("tcp.Tls")]
+  [Parameter("Host", typeof(string), "Hostname or IP address of remote host")]
+  [Parameter("Port", typeof(ushort), "Local port to listen on")]
+  [Parameter("Timeout", typeof(int), "How many milliseconds to wait when receiving data (default 3000)", "3000")]
+  [Parameter("SendTimeout", typeof(int), "How many milliseconds to wait when sending data (default infinite)", "0")]
+  [Parameter("ConnectTimeout", typeof(int), "Max milliseconds to wait for connection (default 10000)", "10000")]
+  [Parameter("CertificateFile", typeof(string), "pks certificate to use", "0")]
+  public class TlsClientPublisher : TlsPublisher
+  {
+    private static NLog.Logger logger = LogManager.GetCurrentClassLogger();
+    protected override NLog.Logger Logger { get { return logger; } }
 
-		public string Host { get; set; }
-		public int ConnectTimeout { get; set; }
+    public string Host { get; set; }
+    public int ConnectTimeout { get; set; }
 
-		public string CertificateFile { get; set; }
-        protected X509Certificate2 _certificate = null;
+    public string CertificateFile { get; set; }
+    protected X509Certificate2 _certificate = null;
 
-		public TlsClientPublisher(Dictionary<string, Variant> args) : base(args) {
-		}
+    public TlsClientPublisher(Dictionary<string, Variant> args) : base(args) {}
 
-        // The following method is invoked by the RemoteCertificateValidationDelegate.
-        public bool ValidateServerCertificate(
-              object sender,
-              X509Certificate certificate,
-              X509Chain chain,
-              SslPolicyErrors sslPolicyErrors) {
-            // No errors with the certificate all is well
-            if (sslPolicyErrors == SslPolicyErrors.None) {
-                return true;
-            }
+    // The following method is invoked by the RemoteCertificateValidationDelegate.
+    public bool ValidateServerCertificate(
+      object sender,
+      X509Certificate certificate,
+      X509Chain chain,
+      SslPolicyErrors sslPolicyErrors) {
+      // No errors with the certificate all is well
+      if (sslPolicyErrors == SslPolicyErrors.None) {
+        return true;
+      }
 
-            // There are errors with the certificate
-            Logger.Error("tls: Certificate error: {0}.", sslPolicyErrors);
-            // Do not allow this client to communicate with unauthenticated servers.
-            // return false;
-            return true;
+      // There are errors with the certificate
+      Logger.Error("tls: Certificate error: {0}.", sslPolicyErrors);
+      // Do not allow this client to communicate with unauthenticated servers.
+      // return false;
+      return true;
+    }
+
+    protected override void OnOpen() {
+      base.OnOpen();
+
+      var timeout = ConnectTimeout;
+      var sw = new Stopwatch();
+
+      var certificateFile = CertificateFile;
+      if (certificateFile != "0") {
+        try {
+          _certificate = new X509Certificate2(certificateFile);
         }
+        catch (Exception ex) {
+          throw new PeachException("Error, unable to read server pks " +
+              certificateFile + ": " + ex.Message, ex);
+        }
+      }
 
-		protected override void OnOpen() {
-			base.OnOpen();
+      for (int i = 1; _tcp == null; i *= 2) {
+        try {
+          // Must build a new client object after every failed attempt to connect.
+          // For some reason, just calling BeginConnect again does not work on mono.
+          _tcp = new TcpClient();
 
-			var timeout = ConnectTimeout;
-			var sw = new Stopwatch();
+          sw.Restart();
 
-            var certificateFile = CertificateFile;
-            if (certificateFile != "0")
+          var ar = _tcp.BeginConnect(Host, Port, null, null);
+          if (!ar.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(timeout))) {
+            throw new TimeoutException();
+          }
+          _tcp.EndConnect(ar);
+
+          try {
+            // Create an SSL stream that will close the client's stream.
+            _tls = new SslStream(
+                _tcp.GetStream(),
+                false,
+                new RemoteCertificateValidationCallback(ValidateServerCertificate),
+                null
+            );
+          } catch (Exception ex) {
+            Logger.Error("tls: Error, On creation of SslStream {0}.", ex.ToString());
+            throw new SoftException(ex);
+          }
+
+          // The server name must match the name on the server certificate.
+          try {
+            if (_certificate != null)
             {
-                try
-                {
-                    _certificate = new X509Certificate2(certificateFile);
-                }
-                catch (Exception ex)
-                {
-                    throw new PeachException("Error, unable to read server pks " +
-                        certificateFile + ": " + ex.Message, ex);
-                }
-			}
+              _tls.AuthenticateAsClient(Host, new X509Certificate2Collection(_certificate), System.Security.Authentication.SslProtocols.Tls, false);
+            }
+            else
+            {
+              _tls.AuthenticateAsClient(Host);
+            }
+          } catch (AuthenticationException ex) {
+            Logger.Error("tls: Error, Unable to authenticate host {0}.", Host);
+            throw new SoftException(ex);
+          }
+        }
+        catch (Exception ex) {
+          sw.Stop();
 
-			for (int i = 1; _tcp == null; i *= 2) {
-				try {
-					// Must build a new client object after every failed attempt to connect.
-					// For some reason, just calling BeginConnect again does not work on mono.
-					_tcp = new TcpClient();
+          if (_tcp != null) {
+            _tcp.Close();
+            _tcp = null;
+          }
+          if (_tls != null) {
+            _tls.Close();
+            _tls = null;
+          }
 
-					sw.Restart();
+          timeout -= (int)sw.ElapsedMilliseconds;
 
-					var ar = _tcp.BeginConnect(Host, Port, null, null);
-					if (!ar.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(timeout))) {
-						throw new TimeoutException();
-                    }
-					_tcp.EndConnect(ar);
+          if (timeout > 0) {
+            int waitTime = Math.Min(timeout, i);
+            timeout -= waitTime;
 
-                    try {
-                        // Create an SSL stream that will close the client's stream.
-                        _tls = new SslStream(
-                            _tcp.GetStream(),
-                            false,
-                            new RemoteCertificateValidationCallback(ValidateServerCertificate),
-                            null
-                        );
-					} catch (Exception ex) {
-						Logger.Error("tls: Error, On creation of SslStream {0}.", ex.ToString());
-						throw new SoftException(ex);
-					}
+            Logger.Warn("open: Warn, Unable to connect to remote host {0} on port {1}.  Trying again in {2}ms...", Host, Port, waitTime);
+            Thread.Sleep(waitTime);
+          } else {
+            Logger.Error("open: Error, Unable to connect to remote host {0} on port {1}.", Host, Port);
+            throw new SoftException(ex);
+          }
+        }
+      }
 
-					// The server name must match the name on the server certificate.
-					try {
-                        if (_certificate != null)
-                        {
-                            _tls.AuthenticateAsClient(Host, new X509Certificate2Collection(_certificate), System.Security.Authentication.SslProtocols.Tls, false);
-                        }
-                        else
-                        {
-                            _tls.AuthenticateAsClient(Host);
-                        }
-					} catch (AuthenticationException ex) {
-						Logger.Error("tls: Error, Unable to authenticate host {0}.", Host);
-						throw new SoftException(ex);
-					}
-				}
-				catch (Exception ex) {
-					sw.Stop();
+      StartClient();
+    }
+  }
 
-					if (_tcp != null) {
-						_tcp.Close();
-						_tcp = null;
-					}
-                    if (_tls != null) {
-                        _tls.Close();
-                        _tls = null;
-                    }
+  [Publisher("TlsListener", true)]
+  [Publisher("tcp.TlsListener")]
+  [Parameter("Interface", typeof(IPAddress), "IP of interface to bind to")]
+  [Parameter("Port", typeof(ushort), "Local port to listen on")]
+  [Parameter("Timeout", typeof(int), "How many milliseconds to wait when receiving data (default 3000)", "3000")]
+  [Parameter("SendTimeout", typeof(int), "How many milliseconds to wait when sending data (default infinite)", "0")]
+  [Parameter("AcceptTimeout", typeof(int), "How many milliseconds to wait for a connection (default 3000)", "3000")]
+  [Parameter("CertificateFile", typeof(string), "pks certificate to use")]
+  public class TlsListenerPublisher : TlsPublisher
+  {
+    private static NLog.Logger logger = LogManager.GetCurrentClassLogger();
+    protected override NLog.Logger Logger { get { return logger; } }
 
-					timeout -= (int)sw.ElapsedMilliseconds;
+    public IPAddress Interface { get; set; }
+    public int AcceptTimeout { get; set; }
 
-					if (timeout > 0) {
-						int waitTime = Math.Min(timeout, i);
-						timeout -= waitTime;
-
-						Logger.Warn("open: Warn, Unable to connect to remote host {0} on port {1}.  Trying again in {2}ms...", Host, Port, waitTime);
-						Thread.Sleep(waitTime);
-					} else {
-						Logger.Error("open: Error, Unable to connect to remote host {0} on port {1}.", Host, Port);
-						throw new SoftException(ex);
-					}
-				}
-			}
-
-			StartClient();
-		}
-	}
-
-	[Publisher("TlsListener", true)]
-	[Publisher("tcp.TlsListener")]
-	[Parameter("Interface", typeof(IPAddress), "IP of interface to bind to")]
-	[Parameter("Port", typeof(ushort), "Local port to listen on")]
-	[Parameter("Timeout", typeof(int), "How many milliseconds to wait when receiving data (default 3000)", "3000")]
-	[Parameter("SendTimeout", typeof(int), "How many milliseconds to wait when sending data (default infinite)", "0")]
-	[Parameter("AcceptTimeout", typeof(int), "How many milliseconds to wait for a connection (default 3000)", "3000")]
-	[Parameter("CertificateFile", typeof(string), "pks certificate to use")]
-	public class TlsListenerPublisher : TlsPublisher
-	{
-		private static NLog.Logger logger = LogManager.GetCurrentClassLogger();
-		protected override NLog.Logger Logger { get { return logger; } }
-
-		public IPAddress Interface { get; set; }
-		public int AcceptTimeout { get; set; }
-
-		protected string CertificateFile { get; set; }
+    protected string CertificateFile { get; set; }
         protected X509Certificate2 _certificate = null;
 
-		protected TcpListener _listener = null;
+    protected TcpListener _listener = null;
 
-		public TlsListenerPublisher(Dictionary<string, Variant> args)
-			: base(args)
-		{
-		}
+    public TlsListenerPublisher(Dictionary<string, Variant> args)
+      : base(args)
+    {
+    }
 
-		protected override void OnOpen()
-		{
-			System.Diagnostics.Debug.Assert(_listener == null);
-			System.Diagnostics.Debug.Assert(_certificate == null);
+    protected override void OnOpen()
+    {
+      System.Diagnostics.Debug.Assert(_listener == null);
+      System.Diagnostics.Debug.Assert(_certificate == null);
 
             try
             {
                 _certificate = new X509Certificate2(CertificateFile);
-			}
-			catch (Exception ex)
-			{
-				throw new PeachException("Error, unable to read server pks " +
-					CertificateFile + ": " + ex.Message, ex);
-			}
+      }
+      catch (Exception ex)
+      {
+        throw new PeachException("Error, unable to read server pks " +
+          CertificateFile + ": " + ex.Message, ex);
+      }
 
-			try
-			{
-				_listener = new TcpListener(Interface, Port);
-				_listener.Start();
-			}
-			catch (Exception ex)
-			{
-				throw new PeachException("Error, unable to bind to interface " +
-					Interface + " on port " + Port + ": " + ex.Message, ex);
-			}
+      try
+      {
+        _listener = new TcpListener(Interface, Port);
+        _listener.Start();
+      }
+      catch (Exception ex)
+      {
+        throw new PeachException("Error, unable to bind to interface " +
+          Interface + " on port " + Port + ": " + ex.Message, ex);
+      }
 
-			base.OnOpen();
-		}
+      base.OnOpen();
+    }
 
-		protected override void OnClose()
-		{
-			if (_listener != null)
-			{
-				_listener.Stop();
-				_listener = null;
-			}
+    protected override void OnClose()
+    {
+      if (_listener != null)
+      {
+        _listener.Stop();
+        _listener = null;
+      }
 
-			base.OnClose();
-		}
+      base.OnClose();
+    }
 
-		protected override void OnAccept()
-		{
-			// Ensure any open stream is closed...
-			base.OnClose();
+    protected override void OnAccept()
+    {
+      // Ensure any open stream is closed...
+      base.OnClose();
 
-			try
-			{
-				var ar = _listener.BeginAcceptTcpClient(null, null);
-				if (!ar.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(AcceptTimeout)))
-					throw new TimeoutException();
-				_tcp = _listener.EndAcceptTcpClient(ar);
+      try
+      {
+        var ar = _listener.BeginAcceptTcpClient(null, null);
+        if (!ar.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(AcceptTimeout)))
+          throw new TimeoutException();
+        _tcp = _listener.EndAcceptTcpClient(ar);
                 _tls = new SslStream(_tcp.GetStream(), false);
                 _tls.AuthenticateAsServer(_certificate, false, SslProtocols.Tls, true);
-			}
-			catch (Exception ex)
-			{
-				throw new SoftException(ex);
-			}
+      }
+      catch (Exception ex)
+      {
+        throw new SoftException(ex);
+      }
 
-			// Start receiving on the client
-			StartClient();
-		}
-	}
+      // Start receiving on the client
+      StartClient();
+    }
+  }
 }
